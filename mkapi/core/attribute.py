@@ -20,12 +20,18 @@ def parse_attribute_with_lineno(x) -> Tuple[str, int]:
 
 def parse_subscript(x) -> str:
     value = parse_node(x.value)
-    slice = parse_node(x.slice)
+    try:
+        slice = parse_node(x.slice.value)
+    except AttributeError:
+        try:
+            slice = str(x.slice.id)
+        except AttributeError:
+            slice = "object"
     if isinstance(slice, str):
         return f"{value}[{slice}]"
-
-    type_str = ", ".join([str(elt) for elt in slice])
-    return f"{value}[{type_str}]"
+    else:
+        slice = ", ".join(map(str,slice))
+        return f"{value}[{slice}]"
 
 
 def parse_tuple(x):
@@ -54,7 +60,7 @@ def parse_node(x):
     elif hasattr(_ast, "Index") and isinstance(x, _ast.Index):
         return x.value
     elif hasattr(_ast, "Ellipsis") and isinstance(x, _ast.Ellipsis):
-        return x.value
+        return x
     elif hasattr(_ast, "Str") and isinstance(x, _ast.Str):
         return x.s
     else:
